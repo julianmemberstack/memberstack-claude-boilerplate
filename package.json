@@ -1,6 +1,21 @@
 {
-  "name": "nextjs",
-  "version": "0.1.0",
+  "name": "memberstack-claude-boilerplate",
+  "version": "1.0.0",
+  "description": "A premium Next.js boilerplate with Memberstack authentication, shadcn/ui components, and plan-based access control. Perfect for SaaS applications and membership sites.",
+  "keywords": [
+    "memberstack",
+    "claude-code",
+    "nextjs",
+    "react",
+    "typescript",
+    "authentication",
+    "saas",
+    "boilerplate",
+    "shadcn-ui",
+    "tailwindcss"
+  ],
+  "author": "Claude Code",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

@@ -35,7 +35,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Memberstack + Claude Code Boilerplate",
   description: "A premium Next.js boilerplate with Memberstack authentication, shadcn/ui components, and plan-based access control. Perfect for SaaS applications and membership sites.",
-  keywords: ["memberstack", "nextjs", "authentication", "saas", "boilerplate", "shadcn", "tailwind"],
+  keywords: ["memberstack", "claude-code", "authentication", "saas", "boilerplate", "shadcn", "tailwind", "nextjs"],
   authors: [{ name: "Claude Code" }],
   viewport: "width=device-width, initial-scale=1",
 };
