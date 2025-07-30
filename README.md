@@ -1,32 +1,31 @@
 # 🚀 Memberstack + Claude Code Boilerplate
 
-A **premium, production-ready boilerplate** that combines the power of Memberstack authentication with modern web development tools. Perfect for building SaaS applications, membership sites, and any project requiring sophisticated user management and plan-based access control.
+The **easiest way to vibe code an app** with secure authentication powered by **Memberstack**, clean frontend powered by **shadcn/ui**, and coding on steroids with **Claude Code**. Perfect for building SaaS applications, membership sites, and any project where you want to ship fast without compromising on quality.
 
 ## ✨ Features
 
-### 🔐 Authentication & Authorization
-- **Memberstack Integration** - Complete user authentication with email/password and OAuth
-- **Plan-Based Access Control** - Tiered access with Free, Premium, and Enterprise plans
-- **Server-Side Protection** - Next.js middleware ensures content is never exposed
-- **Component-Level Gating** - Fine-grained control over UI elements
-- **Feature Toggles** - Show/hide functionality based on user plans
+### 🔐 Secure Authentication (Memberstack)
+- **Zero-config auth** - Email/password and OAuth that just works
+- **Plan-based access control** - Free, Premium, Enterprise tiers out of the box
+- **Server-side protection** - Next.js middleware keeps content locked down
+- **Component-level gating** - Show/hide features based on user plans
+- **Feature toggles** - Perfect for freemium models
 
-### 🎨 Modern UI & Design
-- **shadcn/ui Components** - Beautiful, accessible, and customizable components
-- **Professional Dashboard** - Sidebar navigation with responsive design
-- **Dark Mode Ready** - Built-in theme support with Tailwind CSS
-- **Mobile-First** - Responsive design that works on all devices
-- **TypeScript** - Full type safety throughout the application
+### 🎨 Beautiful UI (shadcn/ui)
+- **Copy-paste components** - Beautiful, accessible components ready to customize
+- **Professional dashboard** - Sidebar navigation that looks expensive
+- **Dark mode ready** - Theme switching with zero effort
+- **Mobile-first** - Responsive design that works everywhere
+- **TypeScript native** - Full type safety throughout
 
-### 🏗️ Developer Experience
-- **Claude Code Optimized** - Comprehensive documentation in `.claude/` folder
-- **Type-Safe Configuration** - Centralized auth config with TypeScript
-- **Environment Variables** - Secure configuration management
-- **Development Debug Mode** - Built-in debugging utilities
-- **Testing Ready** - Jest setup with sample tests included
-- **Bundle Analysis** - Built-in bundle analyzer for optimization
-- **Error Boundaries** - Graceful error handling with recovery options
-- **Clean Architecture** - Well-organized, maintainable codebase
+### 🏗️ Coding on Steroids (Claude Code)
+- **AI-optimized architecture** - Comprehensive docs in `.claude/` folder for instant context
+- **Vibe-based development** - Ask Claude to build features, it just works
+- **Type-safe everything** - Centralized config that prevents footguns
+- **Debug mode built-in** - See what's happening when things break
+- **Testing ready** - Jest setup so you can ship with confidence
+- **Bundle analysis** - Know exactly what's making your app slow
+- **Error boundaries** - Graceful failures that don't kill the vibe
 
 ## 🚀 Quick Start
 
