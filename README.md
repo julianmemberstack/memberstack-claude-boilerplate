@@ -47,26 +47,51 @@ npm install
 # Copy the example environment file
 cp .env.example .env.local
 
-# Add your Memberstack public key
-# Get it from: https://app.memberstack.com/dashboard/app/[your-app]/keys
+# Add your Memberstack keys
+# Get them from: https://app.memberstack.com/dashboard/app/[your-app]/keys
 NEXT_PUBLIC_MEMBERSTACK_KEY=pk_sb_your_public_key_here
+MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 ```
 
-### 3. Configure Memberstack Plans
-In your Memberstack dashboard, create these plans:
+### 3. Create Your Plans in Memberstack
+Create your pricing plans in the [Memberstack dashboard](https://app.memberstack.com) with whatever structure works for your business:
 
-| Plan ID | Name | Price | Description |
-|---------|------|-------|-------------|
-| `pln_free` | Free Plan | $0 | Basic features and dashboard access |
-| `pln_premium` | Premium Plan | $29/mo | Advanced features and analytics |
-| `pln_enterprise` | Enterprise Plan | $99/mo | Full access and admin features |
+- **Free Plan** - Basic features
+- **Premium Plan** - Advanced features  
+- **Enterprise Plan** - Full access
+- Or any custom structure that fits your needs!
 
-### 4. Run the Development Server
+### 4. Auto-Generate Configuration
+Instead of manually configuring plans, let the boilerplate analyze your Memberstack setup:
+
+```bash
+# Automatically generate auth configuration from your Memberstack plans
+npm run setup:memberstack
+```
+
+This will:
+- ✅ Fetch all your plans from Memberstack
+- ✅ Analyze pricing structure and features
+- ✅ Generate optimized auth configuration
+- ✅ Create plan-based access control rules
+- ✅ Suggest features and permissions for each tier
+
+### 5. Run the Development Server
 ```bash
 npm run dev
 ```
 
 Visit `http://localhost:3000` to see your application! 🎉
+
+### 🤖 Let Claude Help Configure Your Plans
+You can also ask Claude to analyze your Memberstack setup:
+
+```bash
+# This creates an API endpoint Claude can use to analyze your plans
+curl http://localhost:3000/api/memberstack/plans
+```
+
+Claude can then provide personalized recommendations for your specific plan structure!
 
 ## 🏗️ Project Structure
 

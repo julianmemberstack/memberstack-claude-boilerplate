@@ -25,7 +25,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "analyze": "cross-env ANALYZE=true next build"
+    "analyze": "cross-env ANALYZE=true next build",
+    "setup:memberstack": "node scripts/setup-memberstack.js",
+    "memberstack:plans": "node -e \"require('./scripts/setup-memberstack.js')\""
   },
   "dependencies": {
     "@memberstack/dom": "^1.9.40",
@@ -60,8 +62,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "cross-env": "^7.0.3",
+    "dotenv": "^16.3.1",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "node-fetch": "^3.3.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
