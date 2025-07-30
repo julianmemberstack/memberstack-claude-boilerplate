@@ -55,7 +55,6 @@ class MemberstackApiClient {
   }
 
   async makeRequest(endpoint) {
-    const fetch = (await import('node-fetch')).default;
     const url = `${this.baseUrl}${endpoint}`;
     
     const response = await fetch(url, {

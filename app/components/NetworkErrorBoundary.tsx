@@ -259,7 +259,7 @@ export class NetworkErrorBoundary extends React.Component<
                   <li>• Try refreshing the page</li>
                   <li>• Wait a moment and try again</li>
                   {!this.state.isOnline && (
-                    <li>• Make sure you're connected to Wi-Fi or cellular data</li>
+                    <li>• Make sure you&apos;re connected to Wi-Fi or cellular data</li>
                   )}
                 </ul>
               </div>

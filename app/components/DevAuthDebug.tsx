@@ -26,10 +26,6 @@ import { useMemberstack } from "./MemberstackProvider";
 import { useAuthConfig } from "@/contexts/AuthConfigContext";
 
 export default function DevAuthDebug() {
-  // Only show in development mode
-  if (process.env.NODE_ENV !== "development") {
-    return null;
-  }
   const { member, memberstack, isLoading } = useMemberstack();
   const { 
     getAccessDebugInfo, 
@@ -43,6 +39,11 @@ export default function DevAuthDebug() {
   const [testRoute, setTestRoute] = useState("/dashboard");
   const [testFeature, setTestFeature] = useState("advanced-analytics");
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Only show in development mode
+  if (process.env.NODE_ENV !== "development") {
+    return null;
+  }
 
   // Get debug information
   const debugInfo = getAccessDebugInfo(member, testRoute);
