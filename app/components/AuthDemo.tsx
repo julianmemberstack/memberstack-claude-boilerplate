@@ -151,8 +151,8 @@ export default function AuthDemo() {
     <div className="min-h-screen bg-background">
       <div className="container max-w-lg mx-auto px-4 py-16 space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">Memberstack Demo</h1>
-          <p className="text-muted-foreground">Authentication with shadcn/ui</p>
+          <h1 className="text-4xl font-bold tracking-tight">Vibe Code Your App</h1>
+          <p className="text-muted-foreground">Secure auth + clean UI + coding on steroids</p>
         </div>
 
         {/* Current User Status */}
