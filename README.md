@@ -33,11 +33,11 @@ A **premium, production-ready boilerplate** that combines the power of Membersta
 ### Prerequisites
 - Node.js 18+ installed
 - A [Memberstack account](https://memberstack.com) (free plan available)
-- Basic knowledge of React and Next.js
+- **Recommended**: [Claude Code](https://claude.ai/code) with [Context7 MCP](https://github.com/context7-ai/mcp-server) for AI-powered development
 
 ### 1. Clone and Setup
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/julianmemberstack/memberstack-claude-boilerplate.git
 cd memberstack-claude-boilerplate
 npm install
 ```
@@ -48,7 +48,7 @@ npm install
 cp .env.example .env.local
 
 # Add your Memberstack keys
-# Get them from: https://app.memberstack.com/dashboard/app/[your-app]/keys
+# Get them from: https://app.memberstack.com/apps/[your-app-id]/devtools
 NEXT_PUBLIC_MEMBERSTACK_KEY=pk_sb_your_public_key_here
 MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 ```
