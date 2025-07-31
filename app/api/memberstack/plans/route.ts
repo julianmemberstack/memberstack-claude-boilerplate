@@ -5,27 +5,108 @@
  * and provide configuration suggestions. It's designed for development
  * and setup purposes.
  * 
+ * Uses the DOM package with public key only - no secret key required.
+ * 
  * GET /api/memberstack/plans - Fetch all plans and configuration suggestions
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getMemberstackApiClient, generateAuthConfigFromPlans, validateMemberstackConfig } from '@/lib/memberstack-api';
+import { setupDOMEnvironment } from '@/scripts/dom-polyfill';
+
+// Memberstack DOM client for server-side use
+class MemberstackDOMClient {
+  private publicKey: string;
+  private memberstack: any = null;
+
+  constructor(publicKey: string) {
+    this.publicKey = publicKey;
+  }
+
+  async init() {
+    if (!this.memberstack) {
+      // Set up DOM environment for Node.js
+      setupDOMEnvironment();
+      
+      const memberstackModule = await import('@memberstack/dom');
+      const memberstackDOM = memberstackModule.default?.default || memberstackModule.default || memberstackModule;
+      this.memberstack = memberstackDOM.init({ publicKey: this.publicKey });
+    }
+    return this.memberstack;
+  }
+
+  async getPlans() {
+    const ms = await this.init();
+    const response = await ms.getPlans();
+    return response.data || [];
+  }
+
+  async getApp() {
+    const ms = await this.init();
+    const response = await ms.getApp();
+    return response.data;
+  }
+}
+
+// Configuration generator (adapted from setup script)
+function generateAuthConfigSuggestions(plans: any[]) {
+  const activePlans = plans.filter(plan => plan.status === 'active');
+  
+  // Sort plans by price (free first, then ascending)  
+  const sortedPlans = activePlans.sort((a, b) => {
+    const priceA = a.prices?.[0]?.amount ? parseFloat(a.prices[0].amount) : 0;
+    const priceB = b.prices?.[0]?.amount ? parseFloat(b.prices[0].amount) : 0;
+    return priceA - priceB;
+  });
+
+  return sortedPlans.map((plan, index) => {
+    const priority = index + 1;
+    const price = plan.prices?.[0]?.amount ? parseFloat(plan.prices[0].amount) : 0;
+    const planName = plan.name.toLowerCase();
+    
+    // Generate features based on plan characteristics
+    let features = ['profile-management'];
+    let permissions = ['read'];
+    let routes = ['/dashboard', '/profile', '/settings'];
+    
+    if (priority === 1 || price === 0 || planName.includes('free') || planName.includes('basic')) {
+      features.push('basic-support', 'core-features', 'basic-analytics');
+    } else if (priority === 2 || planName.includes('premium') || planName.includes('pro')) {
+      features.push('basic-support', 'core-features', 'basic-analytics', 'priority-support', 'advanced-features', 'advanced-analytics', 'api-access', 'export-data', 'custom-branding');
+      permissions.push('write');
+      routes.push('/premium', '/analytics', '/api-access');
+    } else {
+      features.push('basic-support', 'core-features', 'basic-analytics', 'priority-support', 'advanced-features', 'advanced-analytics', 'api-access', 'export-data', 'custom-branding', 'dedicated-support', 'enterprise-features', 'white-label', 'sso', 'audit-logs');
+      permissions.push('write', 'admin');
+      routes.push('/premium', '/analytics', '/api-access', '/admin', '/enterprise', '/team-management');
+    }
+    
+    return {
+      planId: plan.id,
+      name: plan.name,
+      suggestedPriority: priority,
+      suggestedFeatures: features,
+      suggestedPermissions: permissions,
+      suggestedRoutes: routes,
+      prices: plan.prices,
+      reasoning: `Suggested as ${priority === 1 ? 'basic' : priority === 2 ? 'premium' : 'enterprise'} tier based on ${price === 0 ? 'free' : '$' + price} pricing.`
+    };
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // Validate configuration first
-    const validation = validateMemberstackConfig();
+    // Validate public key only
+    const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_KEY;
     
-    if (!validation.isValid) {
+    if (!publicKey) {
       return NextResponse.json({
         success: false,
         error: 'Invalid Memberstack configuration',
-        details: validation.errors,
+        details: ['NEXT_PUBLIC_MEMBERSTACK_KEY is required'],
         help: {
-          message: 'Please check your environment variables',
+          message: 'Please add your Memberstack public key to .env.local',
           requiredVars: [
-            'NEXT_PUBLIC_MEMBERSTACK_KEY - Your public key for client-side SDK',
-            'MEMBERSTACK_SECRET_KEY - Your secret key for API access'
+            'NEXT_PUBLIC_MEMBERSTACK_KEY - Your public key for DOM SDK'
           ],
           getKeys: 'https://app.memberstack.com/dashboard/app/[your-app]/keys'
         }
@@ -41,22 +122,30 @@ export async function GET(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // Fetch plans and generate suggestions
-    const { plans, suggestions } = await generateAuthConfigFromPlans();
+    // Fetch plans using DOM package
+    const client = new MemberstackDOMClient(publicKey);
+    const plans = await client.getPlans();
+    const suggestions = generateAuthConfigSuggestions(plans);
 
-    // Analyze the plan structure
+    // Analyze the plan structure (adapted for DOM package format)
+    const activePlans = plans.filter(p => p.status === 'active');
+    const inactivePlans = plans.filter(p => p.status !== 'active');
+    const plansWithPrices = plans.filter(p => p.prices && p.prices.length > 0);
+    const freePlans = plans.filter(p => !p.prices || p.prices.length === 0 || p.prices.some(price => parseFloat(price.amount) === 0));
+    const paidPlans = plans.filter(p => p.prices && p.prices.some(price => parseFloat(price.amount) > 0));
+    
     const analysis = {
       totalPlans: plans.length,
-      activePlans: plans.filter(p => p.isActive).length,
-      inactivePlans: plans.filter(p => !p.isActive).length,
-      freeePlans: plans.filter(p => !p.price || p.price.amount === 0).length,
-      paidPlans: plans.filter(p => p.price && p.price.amount > 0).length,
-      priceRange: {
-        min: Math.min(...plans.filter(p => p.price).map(p => p.price!.amount)),
-        max: Math.max(...plans.filter(p => p.price).map(p => p.price!.amount)),
-      },
-      currencies: [...new Set(plans.filter(p => p.price).map(p => p.price!.currency))],
-      intervals: [...new Set(plans.filter(p => p.price).map(p => p.price!.interval))],
+      activePlans: activePlans.length,
+      inactivePlans: inactivePlans.length,
+      freePlans: freePlans.length,
+      paidPlans: paidPlans.length,
+      priceRange: plansWithPrices.length > 0 ? {
+        min: Math.min(...plansWithPrices.flatMap(p => p.prices.map(price => parseFloat(price.amount)))),
+        max: Math.max(...plansWithPrices.flatMap(p => p.prices.map(price => parseFloat(price.amount)))),
+      } : { min: 0, max: 0 },
+      currencies: [...new Set(plansWithPrices.flatMap(p => p.prices.map(price => price.currency)))],
+      intervals: [...new Set(plansWithPrices.flatMap(p => p.prices.map(price => price.interval?.type || 'once')))],
     };
 
     // Generate setup recommendations
@@ -70,7 +159,7 @@ export async function GET(request: NextRequest) {
         analysis,
         setupRecommendations,
         validation: {
-          warnings: validation.warnings,
+          warnings: [],
           configStatus: 'valid'
         }
       },
@@ -89,11 +178,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'Authentication failed',
-        message: 'Invalid Memberstack secret key or insufficient permissions',
+        message: 'Invalid Memberstack public key or insufficient permissions',
         help: {
-          checkKey: 'Verify your MEMBERSTACK_SECRET_KEY in .env.local',
+          checkKey: 'Verify your NEXT_PUBLIC_MEMBERSTACK_KEY in .env.local',
           getNewKey: 'https://app.memberstack.com/dashboard/app/[your-app]/keys',
-          permissions: 'Ensure your API key has read permissions for plans'
+          permissions: 'Ensure your public key is valid and active'
         }
       }, { status: 401 });
     }
