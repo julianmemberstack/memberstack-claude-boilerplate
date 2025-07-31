@@ -66,12 +66,12 @@ export async function GET() {
           apiError = response.statusText;
         }
       } catch (error) {
-        if (error.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
           apiStatus = 'timeout';
           apiError = 'Connection timeout';
         } else {
           apiStatus = 'connection_failed';
-          apiError = error.message;
+          apiError = error instanceof Error ? error.message : 'Unknown error';
         }
       }
     }

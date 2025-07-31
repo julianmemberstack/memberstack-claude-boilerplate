@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, AlertCircle, Rocket, Key, Code, ExternalLink, Copy, Terminal } from "lucide-react";
+import Link from "next/link";
 
 export default function SetupPage() {
   const [configStatus, setConfigStatus] = useState<{
@@ -90,7 +91,7 @@ export default function SetupPage() {
             <h1 className="text-4xl font-bold">Welcome to Memberstack Boilerplate!</h1>
           </div>
           <p className="text-lg text-muted-foreground">
-            Let's get your authentication system up and running in 60 seconds
+            Let&apos;s get your authentication system up and running in 60 seconds
           </p>
         </div>
 
@@ -121,7 +122,7 @@ export default function SetupPage() {
                   <AlertTitle>Next Steps</AlertTitle>
                   <AlertDescription>
                     <ul className="mt-2 space-y-1">
-                      <li>• Return to the <a href="/" className="underline">home page</a> to see the auth demo</li>
+                      <li>• Return to the <Link href="/" className="underline">home page</Link> to see the auth demo</li>
                       <li>• Check out the <a href="/dashboard" className="underline">dashboard</a> (requires login)</li>
                       <li>• Read the implementation guide in <code className="text-sm">.claude/</code></li>
                     </ul>
@@ -130,7 +131,7 @@ export default function SetupPage() {
                 
                 <div className="flex gap-2">
                   <Button asChild>
-                    <a href="/">Go to Home</a>
+                    <Link href="/">Go to Home</Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <a href="/dashboard">View Dashboard</a>
@@ -319,6 +320,7 @@ export default function SetupPage() {
               </Card>
             </TabsContent>
           </Tabs>
+        </>
         )}
         
         {/* Help section */}

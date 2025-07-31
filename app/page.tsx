@@ -48,7 +48,7 @@ export default function Home() {
             </div>
             <CardTitle className="text-3xl">Welcome to Memberstack Boilerplate!</CardTitle>
             <CardDescription className="text-lg mt-2">
-              Let's get your authentication system set up in 60 seconds
+              Let&apos;s get your authentication system set up in 60 seconds
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -56,7 +56,7 @@ export default function Home() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Quick Setup Required</AlertTitle>
               <AlertDescription className="mt-2">
-                Your Memberstack integration isn't configured yet. Don't worry, it only takes a minute!
+                Your Memberstack integration isn&apos;t configured yet. Don&apos;t worry, it only takes a minute!
               </AlertDescription>
             </Alert>
             
@@ -91,7 +91,7 @@ export default function Home() {
             </div>
             
             <div className="text-center text-sm text-muted-foreground">
-              <p>Don't have a Memberstack account?</p>
+              <p>Don&apos;t have a Memberstack account?</p>
               <a href="https://memberstack.com" target="_blank" rel="noopener noreferrer" className="underline">
                 Sign up for free at memberstack.com
               </a>
