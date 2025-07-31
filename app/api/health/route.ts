@@ -25,7 +25,8 @@ export async function GET() {
       process.env.MEMBERSTACK_SECRET_KEY!.startsWith('sk_');
     
     // Overall health status - only require public key for basic functionality
-    const isHealthy = hasEnvFile && publicKeyValid;
+    // Note: hasEnvFile is not required in production deployments (Vercel, etc.)
+    const isHealthy = publicKeyValid;
     
     // Test Memberstack API connection if we have a secret key
     let apiStatus = 'not_tested';
