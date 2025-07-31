@@ -33,9 +33,8 @@ The system analyzes your plans and automatically:
 # 1. Set up your environment
 cp .env.example .env.local
 
-# 2. Add your Memberstack keys
+# 2. Add your Memberstack public key
 NEXT_PUBLIC_MEMBERSTACK_KEY=pk_sb_your_public_key_here
-MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 
 # 3. Create plans in Memberstack dashboard (any structure you want)
 
@@ -197,19 +196,17 @@ contentGating: {
 
 ### Environment Variables
 ```bash
-# Required for setup (keep secure!)
-MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here  # SERVER-SIDE ONLY
+# Required for setup
 NEXT_PUBLIC_MEMBERSTACK_KEY=pk_sb_your_key_here # CLIENT-SIDE OK
 ```
 
 ### API Endpoint Security
 - `/api/memberstack/plans` only works in **development mode**
 - Automatically disabled in production
-- Requires valid secret key
 - Returns detailed error messages for debugging
 
 ### Best Practices
-- ✅ Keep secret keys in `.env.local` (not committed)
+- ✅ Keep API keys in `.env.local` (not committed)
 - ✅ Use separate keys for development/production
 - ✅ Regenerate keys if compromised
 - ✅ Review generated configuration before deployment
@@ -239,12 +236,12 @@ NEXT_PUBLIC_MEMBERSTACK_KEY=pk_sb_your_key_here # CLIENT-SIDE OK
 ### Common Issues
 
 **"No plans found"**
-- Check your Memberstack secret key
+- Check your Memberstack public key
 - Ensure you have created plans in the dashboard
 - Verify API key permissions
 
 **"Authentication failed"**
-- Verify `MEMBERSTACK_SECRET_KEY` is correct
+- Verify `NEXT_PUBLIC_MEMBERSTACK_KEY` is correct
 - Check key hasn't expired or been disabled
 - Ensure key has read permissions for plans
 

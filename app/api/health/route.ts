@@ -24,8 +24,8 @@ export async function GET() {
     const secretKeyValid = hasSecretKey && 
       process.env.MEMBERSTACK_SECRET_KEY!.startsWith('sk_');
     
-    // Overall health status
-    const isHealthy = hasEnvFile && publicKeyValid && secretKeyValid;
+    // Overall health status - only require public key for basic functionality
+    const isHealthy = hasEnvFile && publicKeyValid;
     
     // Test Memberstack API connection if we have a secret key
     let apiStatus = 'not_tested';
@@ -110,7 +110,7 @@ export async function GET() {
     }
     
     if (!hasSecretKey) {
-      messages.push('Missing MEMBERSTACK_SECRET_KEY in environment variables.');
+      messages.push('Note: MEMBERSTACK_SECRET_KEY not configured. This is optional for basic authentication.');
     } else if (!secretKeyValid) {
       messages.push('Secret key should start with "sk_".');
     }
@@ -133,7 +133,7 @@ export async function GET() {
       messages.push('No plans found in your Memberstack account. Create plans at app.memberstack.com.');
     }
     
-    if (!hasAuthConfig && isHealthy) {
+    if (!hasAuthConfig && publicKeyValid) {
       messages.push('Auth config not generated. Run "npm run setup:memberstack" to configure plans.');
     }
     
@@ -141,7 +141,7 @@ export async function GET() {
       status: isHealthy ? 'healthy' : 'unhealthy',
       ...status,
       messages,
-      setupCommand: !isHealthy ? 'npm run setup' : null,
+      setupCommand: !publicKeyValid ? 'npm run setup' : null,
     }, {
       status: isHealthy ? 200 : 503,
       headers: {

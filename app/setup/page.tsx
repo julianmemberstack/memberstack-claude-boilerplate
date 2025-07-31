@@ -12,14 +12,12 @@ export default function SetupPage() {
   const [configStatus, setConfigStatus] = useState<{
     hasEnvFile: boolean;
     hasPublicKey: boolean;
-    hasSecretKey: boolean;
     isHealthy: boolean;
     loading: boolean;
     error?: string;
   }>({
     hasEnvFile: false,
     hasPublicKey: false,
-    hasSecretKey: false,
     isHealthy: false,
     loading: true,
   });
@@ -66,7 +64,6 @@ export default function SetupPage() {
       setConfigStatus({
         hasEnvFile: false,
         hasPublicKey: false,
-        hasSecretKey: false,
         isHealthy: false,
         loading: false,
         error: "Failed to check configuration status",
@@ -80,7 +77,7 @@ export default function SetupPage() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const isConfigured = configStatus.hasPublicKey && configStatus.hasSecretKey;
+  const isConfigured = configStatus.hasPublicKey;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
@@ -247,14 +244,13 @@ export default function SetupPage() {
                         <div className="space-y-1">
                           <div># Memberstack Configuration</div>
                           <div>NEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_public_key_here</div>
-                          <div>MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here</div>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="mt-2"
                           onClick={() => copyToClipboard(
-                            "# Memberstack Configuration\nNEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_public_key_here\nMEMBERSTACK_SECRET_KEY=sk_your_secret_key_here",
+                            "# Memberstack Configuration\nNEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_public_key_here",
                             "env"
                           )}
                         >
@@ -299,14 +295,6 @@ export default function SetupPage() {
                               <XCircle className="h-4 w-4 text-red-600 mr-2" />
                             )}
                             <span>Public key configured</span>
-                          </div>
-                          <div className="flex items-center">
-                            {configStatus.hasSecretKey ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-600 mr-2" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-600 mr-2" />
-                            )}
-                            <span>Secret key configured</span>
                           </div>
                         </div>
                       </AlertDescription>

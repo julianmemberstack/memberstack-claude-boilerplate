@@ -100,10 +100,9 @@ npm install
 # Create your environment file
 cp .env.example .env.local
 
-# Add your Memberstack keys
-# Get them from: https://app.memberstack.com → Settings → API Keys
+# Add your Memberstack key
+# Get it from: https://app.memberstack.com → Settings → API Keys
 NEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_public_key_here
-MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 ```
 
 ### 3. Create Your Plans in Memberstack
@@ -403,7 +402,6 @@ npm install
 2. Or manually create `.env.local`:
    ```
    NEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_key
-   MEMBERSTACK_SECRET_KEY=sk_your_key
    ```
 3. Restart the dev server: `npm run dev`
 4. Visit [http://localhost:3000/setup](http://localhost:3000/setup)

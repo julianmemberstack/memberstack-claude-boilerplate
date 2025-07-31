@@ -125,11 +125,8 @@ function createEnvFile(publicKey) {
     }
     
     const envContent = `# Memberstack Configuration
-# Get your keys from https://app.memberstack.com/dashboard
+# Get your key from https://app.memberstack.com/dashboard
 NEXT_PUBLIC_MEMBERSTACK_KEY=${publicKey}
-
-# Optional: Add secret key later for server-side operations
-# MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 
 # Environment
 NODE_ENV=development
@@ -454,8 +451,7 @@ ${colors.reset}`, '');
   log('3. Go to Settings → API Keys');
   log('4. Copy your Public key (starts with pk_)');
   log('');
-  log(`${colors.dim}Note: Only the public key is needed for setup. You can add`);
-  log(`the secret key later if you need server-side operations.${colors.reset}`);
+  log(`${colors.dim}Note: Only the public key is needed for the setup.${colors.reset}`);
   log('');
   
   const openBrowser = await question('Would you like to open Memberstack in your browser? (Y/n): ');

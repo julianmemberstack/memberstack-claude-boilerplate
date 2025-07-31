@@ -438,7 +438,7 @@ async function main() {
     log('3. Test the authentication flow: npm run dev');
     log('4. Create protected pages using the generated plan IDs');
     log('');
-    log('💡 Pro tip: Add MEMBERSTACK_SECRET_KEY to .env.local later');
+    log('💡 Pro tip: All basic authentication features work with just the public key!');
     log('   if you need server-side operations like member management.');
     
   } catch (error) {
