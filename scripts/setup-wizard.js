@@ -101,7 +101,7 @@ function checkDependencies() {
 }
 
 // Create .env.local file with safety checks
-function createEnvFile(publicKey, secretKey) {
+function createEnvFile(publicKey) {
   const envPath = path.join(process.cwd(), '.env.local');
   
   try {
@@ -126,7 +126,9 @@ function createEnvFile(publicKey, secretKey) {
     const envContent = `# Memberstack Configuration
 # Get your keys from https://app.memberstack.com/dashboard
 NEXT_PUBLIC_MEMBERSTACK_KEY=${publicKey}
-MEMBERSTACK_SECRET_KEY=${secretKey}
+
+# Optional: Add secret key later for server-side operations
+# MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 
 # Environment
 NODE_ENV=development
@@ -139,8 +141,8 @@ NODE_ENV=development
     
     // Verify the file was written correctly
     const writtenContent = fs.readFileSync(envPath, 'utf8');
-    if (!writtenContent.includes(publicKey) || !writtenContent.includes(secretKey)) {
-      throw new Error('File was created but keys were not written correctly');
+    if (!writtenContent.includes(publicKey)) {
+      throw new Error('File was created but public key was not written correctly');
     }
     
     logSuccess('.env.local file created successfully!');
@@ -152,14 +154,13 @@ NODE_ENV=development
     log('2. Add the following content:');
     log('');
     log(`NEXT_PUBLIC_MEMBERSTACK_KEY=${publicKey}`);
-    log(`MEMBERSTACK_SECRET_KEY=${secretKey}`);
     log('');
     throw error;
   }
 }
 
-// Validate Memberstack keys format
-function validateKeys(publicKey, secretKey) {
+// Validate Memberstack public key format
+function validatePublicKey(publicKey) {
   const errors = [];
   const warnings = [];
   
@@ -176,79 +177,84 @@ function validateKeys(publicKey, secretKey) {
     errors.push('Public key contains invalid characters (should only contain letters, numbers, and underscores)');
   }
   
-  // Secret key validation
-  if (!secretKey || secretKey.trim() === '') {
-    errors.push('Secret key is required');
-  } else if (!secretKey.startsWith('sk_')) {
-    errors.push('Secret key must start with "sk_" (you entered: ' + secretKey.substring(0, 10) + '...)');
-  } else if (secretKey.length < 20) {
-    errors.push('Secret key is too short (should be at least 20 characters)');
-  } else if (secretKey.length > 200) {
-    errors.push('Secret key is too long (might include extra characters)');
-  } else if (!/^sk_[a-zA-Z0-9_]+$/.test(secretKey)) {
-    errors.push('Secret key contains invalid characters (should only contain letters, numbers, and underscores)');
-  }
-  
-  // Additional checks
-  if (publicKey === secretKey) {
-    errors.push('Public key and secret key cannot be the same');
-  }
-  
   if (publicKey && publicKey.includes(' ')) {
     warnings.push('Public key contains spaces - this might cause issues');
-  }
-  
-  if (secretKey && secretKey.includes(' ')) {
-    warnings.push('Secret key contains spaces - this might cause issues');
   }
   
   return { errors, warnings };
 }
 
-// Test Memberstack connection with retry logic
-async function testMemberstackConnection(secretKey, maxRetries = 3) {
+// Test Memberstack connection using DOM package
+async function testMemberstackConnection(publicKey, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       logInfo(`Testing connection (attempt ${attempt}/${maxRetries})...`);
+      
+      // Mock browser environment for DOM package
+      if (typeof global !== 'undefined' && !global.window) {
+        global.window = {};
+        global.document = {};
+        global.localStorage = {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+          clear: () => {}
+        };
+        global.sessionStorage = global.localStorage;
+      }
+      
+      // Import Memberstack DOM package dynamically
+      const memberstack = await import('@memberstack/dom');
+      
+      // Initialize with public key only
+      const ms = memberstack.default.init({ publicKey });
       
       // Create AbortController for timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
-      const response = await fetch('https://api.memberstack.com/v1/plans', {
-        headers: {
-          'Authorization': `Bearer ${secretKey}`,
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
+      // Test connection by getting app info
+      const appResult = await Promise.race([
+        ms.getApp(),
+        new Promise((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error('Connection timeout'));
+          });
+        })
+      ]);
       
       clearTimeout(timeoutId);
       
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, planCount: data.data?.length || 0 };
-      } else if (response.status === 401) {
-        return { success: false, error: 'Invalid API key (401 Unauthorized)', code: 401 };
-      } else if (response.status === 403) {
-        return { success: false, error: 'API key lacks required permissions (403 Forbidden)', code: 403 };
-      } else if (response.status === 429) {
+      if (appResult.data) {
+        const app = appResult.data;
+        const planCount = app.plans?.length || 0;
+        return { 
+          success: true, 
+          planCount,
+          appMode: app.mode,
+          appName: app.name
+        };
+      } else {
+        return { success: false, error: 'No app data returned', code: 'NO_DATA' };
+      }
+    } catch (error) {
+      if (error.message.includes('timeout') || error.name === 'AbortError') {
+        if (attempt < maxRetries) {
+          logWarning(`Connection timeout. Retrying...`);
+          continue;
+        }
+        return { success: false, error: 'Connection timeout after 15 seconds', code: 'TIMEOUT' };
+      } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        return { success: false, error: 'Invalid public key (401 Unauthorized)', code: 401 };
+      } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+        return { success: false, error: 'Public key lacks required permissions (403 Forbidden)', code: 403 };
+      } else if (error.message.includes('429') || error.message.includes('rate limit')) {
         if (attempt < maxRetries) {
           logWarning(`Rate limited. Waiting 2 seconds before retry...`);
           await sleep(2000);
           continue;
         }
         return { success: false, error: 'Too many requests (429 Rate Limited)', code: 429 };
-      } else {
-        return { success: false, error: `API returned ${response.status}: ${response.statusText}`, code: response.status };
-      }
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        if (attempt < maxRetries) {
-          logWarning(`Connection timeout. Retrying...`);
-          continue;
-        }
-        return { success: false, error: 'Connection timeout after 15 seconds', code: 'TIMEOUT' };
       } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
         if (attempt < maxRetries) {
           logWarning(`Network error. Retrying in 1 second...`);
@@ -289,25 +295,19 @@ async function checkSetupState() {
   try {
     const envContent = fs.readFileSync(envPath, 'utf8');
     const publicKeyMatch = envContent.match(/NEXT_PUBLIC_MEMBERSTACK_KEY=(.+)/);
-    const secretKeyMatch = envContent.match(/MEMBERSTACK_SECRET_KEY=(.+)/);
     
     const publicKey = publicKeyMatch ? publicKeyMatch[1].trim() : '';
-    const secretKey = secretKeyMatch ? secretKeyMatch[1].trim() : '';
     
     if (!publicKey || !publicKey.startsWith('pk_')) {
       state.issues.push('Invalid or missing public key');
     }
     
-    if (!secretKey || !secretKey.startsWith('sk_')) {
-      state.issues.push('Invalid or missing secret key');
-    }
-    
-    if (publicKey.startsWith('pk_') && secretKey.startsWith('sk_')) {
+    if (publicKey.startsWith('pk_')) {
       state.hasValidKeys = true;
       
       // Test connection quickly
       try {
-        const testResult = await testMemberstackConnection(secretKey, 1); // Single attempt
+        const testResult = await testMemberstackConnection(publicKey, 1); // Single attempt
         if (testResult.success) {
           state.hasWorkingConnection = true;
         } else {
@@ -449,16 +449,19 @@ ${colors.reset}`, '');
     }
   }
   
-  // Step 3: Get Memberstack keys
+  // Step 3: Get Memberstack public key
   logHeader('Memberstack Configuration');
   
-  log(`${emojis.key} You'll need your Memberstack API keys to continue.`);
+  log(`${emojis.key} You'll need your Memberstack public key to continue.`);
   log('');
-  log(`Get them from: ${colors.cyan}https://app.memberstack.com${colors.reset}`);
+  log(`Get it from: ${colors.cyan}https://app.memberstack.com${colors.reset}`);
   log('1. Log in to your Memberstack account');
   log('2. Select your app (or create a new one)');
   log('3. Go to Settings → API Keys');
-  log('4. Copy your Public and Secret keys');
+  log('4. Copy your Public key (starts with pk_)');
+  log('');
+  log(`${colors.dim}Note: Only the public key is needed for setup. You can add`);
+  log(`the secret key later if you need server-side operations.${colors.reset}`);
   log('');
   
   const openBrowser = await question('Would you like to open Memberstack in your browser? (Y/n): ');
@@ -500,74 +503,56 @@ ${colors.reset}`, '');
     publicKeyValid = true;
   }
   
-  // Get secret key
-  let secretKey = '';
-  let secretKeyValid = false;
-  
-  while (!secretKeyValid) {
-    secretKey = await question(`${emojis.shield} Enter your SECRET key (starts with sk_): `);
-    
-    if (!secretKey) {
-      logError('Secret key is required!');
-      continue;
-    }
-    
-    if (!secretKey.startsWith('sk_')) {
-      logError('Secret key should start with "sk_"');
-      const retry = await question('Try again? (Y/n): ');
-      if (retry.toLowerCase() === 'n') {
-        process.exit(1);
-      }
-      continue;
-    }
-    
-    secretKeyValid = true;
-  }
-  
   console.log('');
   
-  // Step 4: Validate keys
-  logInfo('Validating your API keys...');
+  // Step 4: Validate public key
+  logInfo('Validating your public key...');
   
-  const validation = validateKeys(publicKey, secretKey);
+  const validation = validatePublicKey(publicKey);
   
   if (validation.errors.length > 0) {
-    logError('Key validation failed:');
+    logError('Public key validation failed:');
     validation.errors.forEach(error => log(`  ❌ ${error}`, colors.red));
     log('');
     logInfo('Common solutions:');
-    log('  1. Copy keys directly from app.memberstack.com → Settings → API Keys');
+    log('  1. Copy public key directly from app.memberstack.com → Settings → API Keys');
     log('  2. Make sure you copied the entire key (no missing characters)');
     log('  3. Check for extra spaces at the beginning or end');
     log('');
     
-    const retry = await question('Would you like to enter your keys again? (Y/n): ');
+    const retry = await question('Would you like to enter your key again? (Y/n): ');
     if (retry.toLowerCase() !== 'n') {
       // Go back to key entry
       return runSetupWizard();
     } else {
-      logError('Setup cancelled due to invalid keys.');
+      logError('Setup cancelled due to invalid key.');
       process.exit(1);
     }
   }
   
   if (validation.warnings.length > 0) {
-    logWarning('Key validation warnings:');
+    logWarning('Public key validation warnings:');
     validation.warnings.forEach(warning => log(`  ⚠️  ${warning}`, colors.yellow));
     
     const proceed = await question('Continue anyway? (y/N): ');
     if (proceed.toLowerCase() !== 'y') {
-      logInfo('Setup cancelled. Please check your keys and try again.');
+      logInfo('Setup cancelled. Please check your key and try again.');
       process.exit(1);
     }
   }
   
   // Test connection
   logInfo('Testing connection to Memberstack...');
-  const testResult = await testMemberstackConnection(secretKey);
+  const testResult = await testMemberstackConnection(publicKey);
   
   if (testResult.success) {
     logSuccess(`Connection successful! Found ${testResult.planCount} plan(s) in your account.`);
+    if (testResult.appMode) {
+      log(`App mode: ${colors.cyan}${testResult.appMode}${colors.reset}`);
+    }
+    if (testResult.appName) {
+      log(`App name: ${colors.cyan}${testResult.appName}${colors.reset}`);
+    }
   } else {
     logError(`Connection failed: ${testResult.error}`);
     log('');
@@ -575,12 +560,12 @@ ${colors.reset}`, '');
     // Provide specific guidance based on error type
     if (testResult.code === 401) {
       logInfo('Solutions for invalid API key:');
-      log('  1. Double-check your secret key in app.memberstack.com → Settings → API Keys');
-      log('  2. Make sure you copied the SECRET key (starts with sk_), not the public key');
+      log('  1. Double-check your public key in app.memberstack.com → Settings → API Keys');
+      log('  2. Make sure you copied the PUBLIC key (starts with pk_)');
       log('  3. Verify the key is for the correct Memberstack app');
     } else if (testResult.code === 403) {
       logInfo('Solutions for permission issues:');
-      log('  1. Make sure your API key has the required permissions');
+      log('  1. Make sure your public key has the required permissions');
       log('  2. Contact Memberstack support if you think this is an error');
     } else if (testResult.code === 'NETWORK' || testResult.code === 'TIMEOUT') {
       logInfo('Solutions for network issues:');
@@ -594,7 +579,7 @@ ${colors.reset}`, '');
     } else {
       logInfo('General troubleshooting:');
       log('  1. Check your internet connection');
-      log('  2. Verify your API keys are correct');
+      log('  2. Verify your public key is correct');
       log('  3. Try again in a few minutes');
     }
     
@@ -610,7 +595,7 @@ ${colors.reset}`, '');
   
   // Step 5: Create .env.local
   logInfo('Creating configuration file...');
-  createEnvFile(publicKey, secretKey);
+  createEnvFile(publicKey);
   
   console.log('');
   

@@ -47,50 +47,61 @@ function logError(message) {
   log(`${colors.red}❌ ${message}${colors.reset}`);
 }
 
-// Memberstack API client (simplified for Node.js)
-class MemberstackApiClient {
-  constructor(secretKey) {
-    this.secretKey = secretKey;
-    this.baseUrl = 'https://api.memberstack.com/v1';
+// Memberstack DOM package client for Node.js
+class MemberstackDOMClient {
+  constructor(publicKey) {
+    this.publicKey = publicKey;
+    this.memberstack = null;
   }
 
-  async makeRequest(endpoint) {
-    const url = `${this.baseUrl}${endpoint}`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${this.secretKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Memberstack API error: ${response.status} ${response.statusText}`);
+  async init() {
+    if (!this.memberstack) {
+      // Mock browser environment for DOM package
+      if (typeof global !== 'undefined' && !global.window) {
+        global.window = {};
+        global.document = {};
+        global.localStorage = {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+          clear: () => {}
+        };
+        global.sessionStorage = global.localStorage;
+      }
+      
+      const memberstackModule = await import('@memberstack/dom');
+      this.memberstack = memberstackModule.default.init({ publicKey: this.publicKey });
     }
-
-    return response.json();
+    return this.memberstack;
   }
 
   async getPlans() {
-    const response = await this.makeRequest('/plans');
+    const ms = await this.init();
+    const response = await ms.getPlans();
     return response.data || [];
+  }
+
+  async getApp() {
+    const ms = await this.init();
+    const response = await ms.getApp();
+    return response.data;
   }
 }
 
 // Configuration generator
 function generateAuthConfigSuggestions(plans) {
-  const activePlans = plans.filter(plan => plan.isActive);
+  const activePlans = plans.filter(plan => plan.status === 'active');
   
   // Sort plans by price (free first, then ascending)  
   const sortedPlans = activePlans.sort((a, b) => {
-    const priceA = a.price?.amount || 0;
-    const priceB = b.price?.amount || 0;
+    const priceA = a.prices?.[0]?.amount ? parseFloat(a.prices[0].amount) : 0;
+    const priceB = b.prices?.[0]?.amount ? parseFloat(b.prices[0].amount) : 0;
     return priceA - priceB;
   });
 
   return sortedPlans.map((plan, index) => {
     const priority = index + 1;
-    const price = plan.price?.amount || 0;
+    const price = plan.prices?.[0]?.amount ? parseFloat(plan.prices[0].amount) : 0;
     const planName = plan.name.toLowerCase();
     
     // Generate features based on plan characteristics
@@ -117,7 +128,7 @@ function generateAuthConfigSuggestions(plans) {
       suggestedFeatures: features,
       suggestedPermissions: permissions,
       suggestedRoutes: routes,
-      price: plan.price,
+      prices: plan.prices,
       reasoning: `Suggested as ${priority === 1 ? 'basic' : priority === 2 ? 'premium' : 'enterprise'} tier based on ${price === 0 ? 'free' : '$' + price} pricing.`
     };
   });
@@ -358,27 +369,25 @@ async function main() {
   
   // Check environment variables
   const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_KEY;
-  const secretKey = process.env.MEMBERSTACK_SECRET_KEY;
   
   if (!publicKey) {
     logError('NEXT_PUBLIC_MEMBERSTACK_KEY not found in .env.local');
     log('Please add your Memberstack public key to .env.local');
-    process.exit(1);
-  }
-  
-  if (!secretKey) {
-    logError('MEMBERSTACK_SECRET_KEY not found in .env.local');
-    log('Please add your Memberstack secret key to .env.local');
     log('Get it from: https://app.memberstack.com/dashboard/app/[your-app]/keys');
     process.exit(1);
   }
   
-  logSuccess('Environment variables found');
+  logSuccess('Public key found in environment');
   
   try {
-    // Fetch plans from Memberstack
-    logHeader('Fetching plans from Memberstack API');
-    const client = new MemberstackApiClient(secretKey);
+    // Fetch plans from Memberstack using DOM package
+    logHeader('Fetching plans from Memberstack');
+    const client = new MemberstackDOMClient(publicKey);
+    
+    // Get app info first
+    const app = await client.getApp();
+    log(`App: ${app.name} (${app.mode} mode)`);
+    
     const plans = await client.getPlans();
     
     if (plans.length === 0) {
@@ -391,9 +400,12 @@ async function main() {
     
     // Display plan information
     plans.forEach(plan => {
-      const price = plan.price ? `$${plan.price.amount}/${plan.price.interval}` : 'Free';
-      const status = plan.isActive ? '🟢 Active' : '🔴 Inactive';
-      log(`  - ${plan.name} (${plan.id}) - ${price} ${status}`);
+      const prices = plan.prices || [];
+      const priceInfo = prices.length > 0 
+        ? prices.map(p => `$${p.amount}/${p.interval?.type || 'once'}`).join(', ')
+        : 'Free';
+      const status = plan.status === 'active' ? '🟢 Active' : '🔴 Inactive';
+      log(`  - ${plan.name} (${plan.id}) - ${priceInfo} ${status}`);
     });
     
     // Generate configuration suggestions
@@ -433,15 +445,16 @@ async function main() {
     log('2. Customize features, permissions, and routes as needed');
     log('3. Test the authentication flow: npm run dev');
     log('4. Create protected pages using the generated plan IDs');
-    
-    logWarning('Important: Keep your MEMBERSTACK_SECRET_KEY secure and never expose it client-side!');
+    log('');
+    log('💡 Pro tip: Add MEMBERSTACK_SECRET_KEY to .env.local later');
+    log('   if you need server-side operations like member management.');
     
   } catch (error) {
     logError(`Setup failed: ${error.message}`);
     
     if (error.message.includes('401') || error.message.includes('403')) {
       log('\\nThis might be due to:');
-      log('- Invalid secret key');
+      log('- Invalid public key');
       log('- Insufficient permissions');
       log('- Expired or disabled key');
     }
