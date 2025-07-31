@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const { execSync } = require('child_process');
+const { setupDOMEnvironment } = require('./dom-polyfill');
 
 // Colors for console output
 const colors = {
@@ -190,24 +191,17 @@ async function testMemberstackConnection(publicKey, maxRetries = 3) {
     try {
       logInfo(`Testing connection (attempt ${attempt}/${maxRetries})...`);
       
-      // Mock browser environment for DOM package
-      if (typeof global !== 'undefined' && !global.window) {
-        global.window = {};
-        global.document = {};
-        global.localStorage = {
-          getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {},
-          clear: () => {}
-        };
-        global.sessionStorage = global.localStorage;
-      }
+      // Set up DOM environment for Node.js
+      setupDOMEnvironment();
       
       // Import Memberstack DOM package dynamically
       const memberstack = await import('@memberstack/dom');
       
+      // Handle nested default export structure
+      const memberstackDOM = memberstack.default?.default || memberstack.default || memberstack;
+      
       // Initialize with public key only
-      const ms = memberstack.default.init({ publicKey });
+      const ms = memberstackDOM.init({ publicKey });
       
       // Create AbortController for timeout
       const controller = new AbortController();

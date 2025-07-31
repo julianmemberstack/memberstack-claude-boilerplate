@@ -13,6 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { setupDOMEnvironment } = require('./dom-polyfill');
 require('dotenv').config({ path: '.env.local' });
 
 // Colors for console output
@@ -56,21 +57,12 @@ class MemberstackDOMClient {
 
   async init() {
     if (!this.memberstack) {
-      // Mock browser environment for DOM package
-      if (typeof global !== 'undefined' && !global.window) {
-        global.window = {};
-        global.document = {};
-        global.localStorage = {
-          getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {},
-          clear: () => {}
-        };
-        global.sessionStorage = global.localStorage;
-      }
+      // Set up DOM environment for Node.js
+      setupDOMEnvironment();
       
       const memberstackModule = await import('@memberstack/dom');
-      this.memberstack = memberstackModule.default.init({ publicKey: this.publicKey });
+      const memberstackDOM = memberstackModule.default?.default || memberstackModule.default || memberstackModule;
+      this.memberstack = memberstackDOM.init({ publicKey: this.publicKey });
     }
     return this.memberstack;
   }

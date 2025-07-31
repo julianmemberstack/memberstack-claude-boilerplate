@@ -69,6 +69,8 @@
     "eslint-config-next": "15.4.4",
     "jest": "^30.0.0",
     "jest-environment-jsdom": "^30.0.0",
+    "jsdom": "^26.1.0",
+    "node-fetch": "^3.3.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
