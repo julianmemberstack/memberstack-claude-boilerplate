@@ -168,8 +168,8 @@ function validateKeys(publicKey, secretKey) {
     errors.push('Public key is required');
   } else if (!publicKey.startsWith('pk_')) {
     errors.push('Public key must start with "pk_" (you entered: ' + publicKey.substring(0, 10) + '...)');
-  } else if (publicKey.length < 30) {
-    errors.push('Public key is too short (should be at least 30 characters)');
+  } else if (publicKey.length < 20) {
+    errors.push('Public key is too short (should be at least 20 characters)');
   } else if (publicKey.length > 200) {
     errors.push('Public key is too long (might include extra characters)');
   } else if (!/^pk_[a-zA-Z0-9_]+$/.test(publicKey)) {
@@ -181,8 +181,8 @@ function validateKeys(publicKey, secretKey) {
     errors.push('Secret key is required');
   } else if (!secretKey.startsWith('sk_')) {
     errors.push('Secret key must start with "sk_" (you entered: ' + secretKey.substring(0, 10) + '...)');
-  } else if (secretKey.length < 30) {
-    errors.push('Secret key is too short (should be at least 30 characters)');
+  } else if (secretKey.length < 20) {
+    errors.push('Secret key is too short (should be at least 20 characters)');
   } else if (secretKey.length > 200) {
     errors.push('Secret key is too long (might include extra characters)');
   } else if (!/^sk_[a-zA-Z0-9_]+$/.test(secretKey)) {
