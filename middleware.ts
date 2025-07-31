@@ -13,10 +13,6 @@ import { authConfig, isProtectedRoute, isPublicRoute, getRedirectUrl } from '@/l
 // Get public key for later use
 const publicKey = process.env.NEXT_PUBLIC_MEMBERSTACK_KEY;
 
-if (!publicKey) {
-  throw new Error("NEXT_PUBLIC_MEMBERSTACK_KEY environment variable is required");
-}
-
 /**
  * Extract authentication information from request cookies
  * This is a simplified approach that reads Memberstack session cookies
@@ -82,6 +78,24 @@ export async function middleware(request: NextRequest) {
     pathname.includes('.') ||
     pathname.startsWith('/favicon')
   ) {
+    return NextResponse.next();
+  }
+
+  // Check if Memberstack is configured
+  if (!publicKey) {
+    // Special handling for setup-related paths
+    if (pathname === '/setup' || pathname === '/api/health') {
+      return NextResponse.next();
+    }
+
+    // For all other paths, redirect to setup page if not configured
+    if (pathname !== '/') {
+      const setupUrl = new URL('/setup', request.url);
+      setupUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(setupUrl);
+    }
+
+    // For home page, show setup instructions
     return NextResponse.next();
   }
 

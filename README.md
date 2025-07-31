@@ -2,6 +2,40 @@
 
 The **easiest way to vibe code an app** with secure authentication powered by **Memberstack**, clean frontend powered by **shadcn/ui**, and coding on steroids with **Claude Code**. Perfect for building SaaS applications, membership sites, and any project where you want to ship fast without compromising on quality.
 
+## ⚡ 60-Second Quick Start
+
+```bash
+# 1. Clone the repository (10 seconds)
+git clone https://github.com/julianmemberstack/memberstack-claude-boilerplate.git my-app
+cd my-app
+
+# 2. Install and setup (30 seconds)
+npm install
+
+# 3. Run the setup wizard (20 seconds)
+npm run setup
+# The wizard will guide you through getting your Memberstack API keys
+
+# 4. Start building! 🎉
+npm run dev
+```
+
+**That's it!** Visit [http://localhost:3000](http://localhost:3000) and you'll see your authenticated app running.
+
+### 🎯 What just happened?
+
+1. ✅ **Dependencies installed** - All packages ready to go
+2. ✅ **Environment configured** - Your `.env.local` file was created
+3. ✅ **Memberstack connected** - Authentication system is live
+4. ✅ **Plans configured** - Your pricing tiers are set up
+5. ✅ **Ready to customize** - Start building your features!
+
+### 🚨 Common Issues?
+
+- **"I don't have a Memberstack account"** → [Sign up free at memberstack.com](https://memberstack.com)
+- **"Where do I find my API keys?"** → [app.memberstack.com](https://app.memberstack.com) → Settings → API Keys
+- **"Setup failed"** → Check `/api/health` for diagnostics or run `npm run setup` again
+
 ## ✨ Features
 
 ### 🔐 Secure Authentication (Memberstack)
@@ -27,28 +61,48 @@ The **easiest way to vibe code an app** with secure authentication powered by **
 - **Bundle analysis** - Know exactly what's making your app slow
 - **Error boundaries** - Graceful failures that don't kill the vibe
 
-## 🚀 Quick Start
+## 🚀 Detailed Setup Guide
 
 ### Prerequisites
 - Node.js 18+ installed
 - A [Memberstack account](https://memberstack.com) (free plan available)
 - **Recommended**: [Claude Code](https://claude.ai/code) with [Context7 MCP](https://github.com/context7-ai/mcp-server) for AI-powered development
 
-### 1. Clone and Setup
+### Option 1: Automatic Setup (Recommended)
+
+The easiest way is to use our interactive setup wizard:
+
+```bash
+npm run setup
+```
+
+This wizard will:
+- ✅ Check your environment
+- ✅ Guide you to get your Memberstack API keys
+- ✅ Create your `.env.local` file automatically
+- ✅ Test your connection to Memberstack
+- ✅ Configure your authentication plans
+- ✅ Verify everything is working
+
+### Option 2: Manual Setup
+
+If you prefer to set things up manually:
+
+#### 1. Clone and Install
 ```bash
 git clone https://github.com/julianmemberstack/memberstack-claude-boilerplate.git
 cd memberstack-claude-boilerplate
 npm install
 ```
 
-### 2. Environment Configuration
+#### 2. Environment Configuration
 ```bash
-# Copy the example environment file
+# Create your environment file
 cp .env.example .env.local
 
 # Add your Memberstack keys
-# Get them from: https://app.memberstack.com/apps/[your-app-id]/devtools
-NEXT_PUBLIC_MEMBERSTACK_KEY=pk_sb_your_public_key_here
+# Get them from: https://app.memberstack.com → Settings → API Keys
+NEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_public_key_here
 MEMBERSTACK_SECRET_KEY=sk_your_secret_key_here
 ```
 
@@ -309,31 +363,73 @@ This will build your app and open a detailed bundle analysis report.
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Quick Diagnostics
 
-**Authentication not working?**
-- Verify your `NEXT_PUBLIC_MEMBERSTACK_KEY` in `.env.local`
-- Check browser console for errors
-- Ensure Memberstack app is properly configured
+Visit [http://localhost:3000/api/health](http://localhost:3000/api/health) to see:
+- ✅ Environment configuration status
+- ✅ API key validation
+- ✅ Memberstack connection status
+- ✅ Plan configuration status
 
-**Routes not protected?**
-- Check route configuration in `lib/auth-config.ts`
-- Verify middleware matcher patterns
-- Test with different user plan levels
+### Common Issues & Solutions
 
-**Components not gating properly?**
-- Validate plan IDs match your Memberstack dashboard
-- Check auth context is properly provided
-- Review access control logic
+**"Middleware Error" on startup**
+```bash
+# Solution: Run the setup wizard
+npm run setup
+```
+
+**"Authentication not working"**
+- Check if `.env.local` exists (not `.env`)
+- Verify keys start with `pk_` and `sk_`
+- Check browser console for detailed errors
+- Visit `/api/health` for diagnostics
+
+**"Plans not matching"**
+```bash
+# Regenerate auth config based on your Memberstack plans
+npm run setup:memberstack
+```
+
+**"Cannot find module" errors**
+```bash
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**"Setup wizard fails"**
+1. Reset and try again: `npm run setup:reset`
+2. Or manually create `.env.local`:
+   ```
+   NEXT_PUBLIC_MEMBERSTACK_KEY=pk_your_key
+   MEMBERSTACK_SECRET_KEY=sk_your_key
+   ```
+3. Restart the dev server: `npm run dev`
+4. Visit [http://localhost:3000/setup](http://localhost:3000/setup)
+
+**"I messed up the configuration"**
+```bash
+# Start over with a clean slate
+npm run setup:reset
+npm run setup
+```
 
 ### Debug Mode
-Enable detailed logging by setting:
+Enable detailed logging:
 ```typescript
 // In lib/auth-config.ts
 settings: {
   enableDebugMode: true
 }
 ```
+
+### Getting Help
+
+- 📚 Check the guides in `.claude/` folder
+- 🔍 Search [Memberstack docs](https://docs.memberstack.com)
+- 💬 Ask Claude Code for help with implementation
+- 🐛 [Report issues](https://github.com/your-repo/issues)
 
 ## 🤝 Contributing
 

@@ -79,6 +79,19 @@ export function getPrimaryPlan(member: Member | null): PlanConfig | null {
  */
 export function getActivePlans(member: Member | null): PlanConfig[] {
   const activePlanIds = getActivePlanIds(member);
+  
+  // If no plans are configured but user is authenticated, return default plan
+  if (activePlanIds.length > 0 && Object.keys(authConfig.plans).length === 0) {
+    return [{
+      id: "authenticated",
+      name: "Authenticated User",
+      routes: ["*"],
+      features: ["basic-features"],
+      permissions: ["read"],
+      priority: 1
+    }];
+  }
+  
   return activePlanIds
     .map(planId => authConfig.plans[planId])
     .filter(Boolean)
@@ -164,6 +177,11 @@ export function hasRouteAccess(member: Member | null, path: string): AccessCheck
 
   // Check plan requirements
   if (protectedRoute.requiredPlans && protectedRoute.requiredPlans.length > 0) {
+    // If no plans are configured in the system, allow authenticated users
+    if (Object.keys(authConfig.plans).length === 0 && member) {
+      return { hasAccess: true };
+    }
+    
     const hasRequiredPlan = hasPlan(member, protectedRoute.requiredPlans);
     
     if (!hasRequiredPlan) {
