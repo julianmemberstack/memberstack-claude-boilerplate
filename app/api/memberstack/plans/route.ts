@@ -28,7 +28,7 @@ class MemberstackDOMClient {
       setupDOMEnvironment();
       
       const memberstackModule = await import('@memberstack/dom');
-      const memberstackDOM = memberstackModule.default?.default || memberstackModule.default || memberstackModule;
+      const memberstackDOM = memberstackModule.default;
       this.memberstack = memberstackDOM.init({ publicKey: this.publicKey });
     }
     return this.memberstack;
@@ -128,11 +128,11 @@ export async function GET(request: NextRequest) {
     const suggestions = generateAuthConfigSuggestions(plans);
 
     // Analyze the plan structure (adapted for DOM package format)
-    const activePlans = plans.filter(p => p.status === 'active');
-    const inactivePlans = plans.filter(p => p.status !== 'active');
-    const plansWithPrices = plans.filter(p => p.prices && p.prices.length > 0);
-    const freePlans = plans.filter(p => !p.prices || p.prices.length === 0 || p.prices.some(price => parseFloat(price.amount) === 0));
-    const paidPlans = plans.filter(p => p.prices && p.prices.some(price => parseFloat(price.amount) > 0));
+    const activePlans = plans.filter((p: any) => p.status === 'active');
+    const inactivePlans = plans.filter((p: any) => p.status !== 'active');
+    const plansWithPrices = plans.filter((p: any) => p.prices && p.prices.length > 0);
+    const freePlans = plans.filter((p: any) => !p.prices || p.prices.length === 0 || p.prices.some((price: any) => parseFloat(price.amount) === 0));
+    const paidPlans = plans.filter((p: any) => p.prices && p.prices.some((price: any) => parseFloat(price.amount) > 0));
     
     const analysis = {
       totalPlans: plans.length,
@@ -141,11 +141,11 @@ export async function GET(request: NextRequest) {
       freePlans: freePlans.length,
       paidPlans: paidPlans.length,
       priceRange: plansWithPrices.length > 0 ? {
-        min: Math.min(...plansWithPrices.flatMap(p => p.prices.map(price => parseFloat(price.amount)))),
-        max: Math.max(...plansWithPrices.flatMap(p => p.prices.map(price => parseFloat(price.amount)))),
+        min: Math.min(...plansWithPrices.flatMap((p: any) => p.prices.map((price: any) => parseFloat(price.amount)))),
+        max: Math.max(...plansWithPrices.flatMap((p: any) => p.prices.map((price: any) => parseFloat(price.amount)))),
       } : { min: 0, max: 0 },
-      currencies: [...new Set(plansWithPrices.flatMap(p => p.prices.map(price => price.currency)))],
-      intervals: [...new Set(plansWithPrices.flatMap(p => p.prices.map(price => price.interval?.type || 'once')))],
+      currencies: [...new Set(plansWithPrices.flatMap((p: any) => p.prices.map((price: any) => price.currency)))],
+      intervals: [...new Set(plansWithPrices.flatMap((p: any) => p.prices.map((price: any) => price.interval?.type || 'once')))],
     };
 
     // Generate setup recommendations
